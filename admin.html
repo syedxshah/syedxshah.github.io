@@ -2,85 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ansar | Ad Multi-Control</title>
+    <title>Ansar | Logic Controller</title>
     <style>
         :root { --accent: #007bff; --bg: #0d1117; --card: #161b22; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #c9d1d9; padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: auto; }
-        .card { background: var(--card); border: 1px solid #30363d; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        textarea { width: 100%; height: 250px; background: #0d1117; color: #58a6ff; border: 1px solid #30363d; padding: 10px; border-radius: 6px; box-sizing: border-box; font-family: monospace; }
-        input[type="password"] { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .switch-box { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 10px; border-radius: 6px; margin: 10px 0; }
-        #status { font-weight: bold; margin-top: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #c9d1d9; padding: 20px; text-align: center; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { width: 100%; max-width: 400px; }
+        .card { background: var(--card); border: 1px solid #30363d; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        input[type="password"] { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn:hover { background: #0056b3; }
+        .switch-box { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #30363d; }
+        #status { font-weight: bold; margin-top: 15px; font-size: 14px; }
+        .ad-count { font-size: 12px; color: #8b949e; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2 style="color: var(--accent);">Ansar Control Panel</h2>
+        <h2 style="color: var(--accent); margin-top: 0;">Ansar System</h2>
         
         <input type="password" id="token" placeholder="GitHub Access Token">
-        <button class="btn" style="background: #30363d; font-size: 11px;" onclick="saveToken()">Save Token Locally</button>
+        
+        <div class="ad-count" id="adCount">Fetching ads from backend...</div>
 
         <div class="switch-box">
-            <span>Global Ads Enabled</span>
-            <input type="checkbox" id="adsEnabled" checked>
+            <span>Global Ads Status</span>
+            <input type="checkbox" id="adsEnabled">
         </div>
 
-        <p style="text-align: left; font-size: 12px; margin-bottom: 5px;">Paste one ad per line (Max 40-50 recommended):</p>
-        <textarea id="adListInput"></textarea>
-
-        <button class="btn" onclick="pushToGitHub()">PUSH UPDATE TO SYSTEM</button>
+        <button class="btn" onclick="pushToGitHub()">APPLY CHANGES</button>
         <p id="status"></p>
+        
+        <button class="btn" style="background: #30363d; font-size: 11px; margin-top: 20px;" onclick="saveToken()">Save Token to Browser</button>
     </div>
 </div>
 
 <script type="module">
     import { Octokit } from "https://esm.sh/octokit";
 
-    window.onload = () => {
+    const owner = "syedxshah";
+    const repo = "syedxshah.github.io";
+    const path = "ads_config.json";
+    let currentAdList = []; // This stores the ads fetched from backend
+
+    window.onload = async () => {
+        // 1. Load Token
         const saved = localStorage.getItem('ansar_gh_token');
         if(saved) document.getElementById('token').value = saved;
+
+        // 2. Fetch current config from Backend
+        try {
+            const res = await fetch(`https://${owner}.github.io/${path}?t=${new Date().getTime()}`);
+            const data = await res.json();
+            currentAdList = data.ad_list || [];
+            document.getElementById('adsEnabled').checked = data.ads_enabled;
+            document.getElementById('adCount').innerText = `Backend Loaded: ${currentAdList.length} Ads Active`;
+        } catch (e) {
+            document.getElementById('adCount').innerText = "Error loading ads from GitHub.";
+        }
     };
 
     window.saveToken = () => {
         localStorage.setItem('ansar_gh_token', document.getElementById('token').value);
-        alert("Token saved!");
+        alert("Token saved locally!");
     };
 
     window.pushToGitHub = async () => {
         const token = document.getElementById('token').value;
         const enabled = document.getElementById('adsEnabled').checked;
-        const list = document.getElementById('adListInput').value.split('\n').filter(line => line.trim() !== "");
         const status = document.getElementById('status');
 
         if(!token) return alert("Enter Token!");
 
         const octokit = new Octokit({ auth: token });
-        const owner = "syedxshah";
-        const repo = "syedxshah.github.io";
-        const path = "ads_config.json";
 
         try {
-            status.innerText = "Syncing with GitHub...";
+            status.innerText = "Connecting to GitHub...";
             const { data: fileData } = await octokit.rest.repos.getContent({ owner, repo, path });
 
+            // We keep the ad_list the same, only changing the 'enabled' switch
             const newJson = JSON.stringify({
                 ads_enabled: enabled,
-                ad_list: list
+                ad_list: currentAdList 
             }, null, 2);
 
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner, repo, path,
-                message: "Ad List Update: " + list.length + " ads",
+                message: `Toggle Ads: ${enabled ? 'ON' : 'OFF'}`,
                 content: btoa(newJson),
                 sha: fileData.sha
             });
 
             status.style.color = "#28a745";
-            status.innerText = "🚀 SUCCESS! System updated.";
+            status.innerText = "🚀 SUCCESS! System Updated.";
         } catch (err) {
             status.style.color = "#dc3545";
             status.innerText = "Error: " + err.message;
