@@ -1,5 +1,5 @@
 {
-  "ads_enabled": false,
-  "ad_text": "Chal! Nikal BC => ",
-  "last_updated": "25/03/2026, 03:34:38"
+  "ads_enabled": true,
+  "ad_folder_url": "https://iansar.codes/ads/",
+  "ad_files": ["ad1.png", "ad2.png", "ad3.png", "ad4.png", "ad5.png", "ad6.png"]
 }
