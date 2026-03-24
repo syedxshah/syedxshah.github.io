@@ -1,5 +1,5 @@
 {
-  "ads_enabled": true,
+  "ads_enabled": false,
   "ad_folder_url": "https://iansar.codes/ads/",
   "ad_files": ["ad1.png", "ad2.png", "ad3.png", "ad4.png", "ad5.png", "ad6.png"]
 }
