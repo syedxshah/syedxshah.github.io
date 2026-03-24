@@ -2,113 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ansar.codes | Command Center</title>
+    <title>Ansar | Ad Multi-Control</title>
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --bg: #0d1117; --card: #161b22; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #c9d1d9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 500px; }
-        .card { background: var(--card); border: 1px solid #30363d; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; justify-content: space-between; }
-        
-        /* Inputs & Buttons */
-        input[type="password"], textarea { width: 100%; padding: 12px; margin: 10px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-top: 10px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #1f6feb; }
-        .btn-outline { background: transparent; border: 1px solid #30363d; color: #8b949e; font-size: 12px; width: auto; padding: 5px 15px; }
-
-        /* The Switch */
-        .switch-row { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 15px; border-radius: 8px; margin: 15px 0; }
-        .switch { position: relative; display: inline-block; width: 45px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--success); }
-        input:checked + .slider:before { transform: translateX(23px); }
-
-        /* Preview Area */
-        .preview-box { border: 2px dashed #30363d; padding: 10px; margin-top: 15px; text-align: center; border-radius: 8px; }
-        #status { font-size: 13px; margin-top: 10px; text-align: center; font-weight: bold; }
-        .log-box { font-family: monospace; font-size: 11px; background: #000; padding: 10px; border-radius: 6px; color: var(--success); height: 80px; overflow-y: auto; }
+        :root { --accent: #007bff; --bg: #0d1117; --card: #161b22; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #c9d1d9; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: var(--card); border: 1px solid #30363d; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        textarea { width: 100%; height: 250px; background: #0d1117; color: #58a6ff; border: 1px solid #30363d; padding: 10px; border-radius: 6px; box-sizing: border-box; font-family: monospace; }
+        input[type="password"] { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .switch-box { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 10px; border-radius: 6px; margin: 10px 0; }
+        #status { font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2>Auth <span>🔐</span></h2>
-        <input type="password" id="token" placeholder="GitHub Personal Access Token">
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-outline" onclick="saveToken()">Save Locally</button>
-            <button class="btn-outline" onclick="clearToken()">Clear</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>Ad Control 📡</h2>
-        <div class="switch-row">
-            <span>Global Ad Switch</span>
-            <label class="switch">
-                <input type="checkbox" id="adsEnabled" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <textarea id="adFiles" rows="3" placeholder="Filenames (comma separated): ad1.png, ad2.png"></textarea>
-        <input type="text" id="adFolder" placeholder="Folder URL: https://iansar.codes/ads/">
+        <h2 style="color: var(--accent);">Ansar Control Panel</h2>
         
-        <button class="btn-primary" onclick="pushUpdate()">PUSH TO ALL PCs</button>
-        <p id="status">Ready.</p>
-    </div>
+        <input type="password" id="token" placeholder="GitHub Access Token">
+        <button class="btn" style="background: #30363d; font-size: 11px;" onclick="saveToken()">Save Token Locally</button>
 
-    <div class="card">
-        <h2>System Logs 🖥️</h2>
-        <div class="log-box" id="logBox">
-            [System] Waiting for push...<br>
-            [Network] GitHub Pages Link: iansar.codes
+        <div class="switch-box">
+            <span>Global Ads Enabled</span>
+            <input type="checkbox" id="adsEnabled" checked>
         </div>
-        <button class="btn-outline" style="width: 100%; margin-top: 10px;" onclick="window.open('YOUR_DISCORD_CHANNEL_URL')">Open Discord Tracker</button>
+
+        <p style="text-align: left; font-size: 12px; margin-bottom: 5px;">Paste one ad per line (Max 40-50 recommended):</p>
+        <textarea id="adListInput"></textarea>
+
+        <button class="btn" onclick="pushToGitHub()">PUSH UPDATE TO SYSTEM</button>
+        <p id="status"></p>
     </div>
 </div>
 
 <script type="module">
     import { Octokit } from "https://esm.sh/octokit";
 
-    // Auto-load token from browser memory
     window.onload = () => {
-        const savedToken = localStorage.getItem('ansar_token');
-        if (savedToken) {
-            document.getElementById('token').value = savedToken;
-            addLog("Token loaded from secure local storage.");
-        }
+        const saved = localStorage.getItem('ansar_gh_token');
+        if(saved) document.getElementById('token').value = saved;
     };
 
     window.saveToken = () => {
-        localStorage.setItem('ansar_token', document.getElementById('token').value);
-        alert("Token saved to this browser.");
+        localStorage.setItem('ansar_gh_token', document.getElementById('token').value);
+        alert("Token saved!");
     };
 
-    window.clearToken = () => {
-        localStorage.removeItem('ansar_token');
-        document.getElementById('token').value = "";
-        alert("Memory cleared.");
-    };
-
-    function addLog(msg) {
-        const lb = document.getElementById('logBox');
-        lb.innerHTML += `<br>> ${msg}`;
-        lb.scrollTop = lb.scrollHeight;
-    }
-
-    window.pushUpdate = async () => {
+    window.pushToGitHub = async () => {
         const token = document.getElementById('token').value;
         const enabled = document.getElementById('adsEnabled').checked;
-        const files = document.getElementById('adFiles').value.split(',').map(s => s.trim());
-        const folder = document.getElementById('adFolder').value;
+        const list = document.getElementById('adListInput').value.split('\n').filter(line => line.trim() !== "");
         const status = document.getElementById('status');
 
-        if (!token) return alert("Token Required!");
+        if(!token) return alert("Enter Token!");
 
         const octokit = new Octokit({ auth: token });
         const owner = "syedxshah";
@@ -116,33 +64,26 @@
         const path = "ads_config.json";
 
         try {
-            status.innerText = "Connecting...";
-            addLog("Fetching SHA from GitHub...");
-            
+            status.innerText = "Syncing with GitHub...";
             const { data: fileData } = await octokit.rest.repos.getContent({ owner, repo, path });
 
-            const newContent = btoa(JSON.stringify({
+            const newJson = JSON.stringify({
                 ads_enabled: enabled,
-                ad_folder_url: folder,
-                ad_files: files,
-                timestamp: new Date().getTime()
-            }, null, 2));
+                ad_list: list
+            }, null, 2);
 
-            addLog("Uploading new config...");
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner, repo, path,
-                message: "Dashboard Update: " + (enabled ? "ON" : "OFF"),
-                content: newContent,
+                message: "Ad List Update: " + list.length + " ads",
+                content: btoa(newJson),
                 sha: fileData.sha
             });
 
             status.style.color = "#28a745";
-            status.innerText = "✅ Pushed Successfully!";
-            addLog("Global update broadcasted.");
+            status.innerText = "🚀 SUCCESS! System updated.";
         } catch (err) {
             status.style.color = "#dc3545";
-            status.innerText = "Error!";
-            addLog("FAIL: " + err.message);
+            status.innerText = "Error: " + err.message;
         }
     };
 </script>
