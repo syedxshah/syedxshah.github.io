@@ -1,31 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Ansar Ad Control</title>
+    <meta charset="UTF-8">
+    <title>Ansar Ad Control Panel</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 50px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; display: inline-block; width: 350px; }
-        input, textarea, button { width: 90%; margin: 10px 0; padding: 10px; border-radius: 5px; border: none; }
-        button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
-        .toggle-container { margin: 20px 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f0f; color: #e0e0e0; text-align: center; padding: 40px; }
+        .card { background: #1a1a1a; padding: 30px; border-radius: 15px; display: inline-block; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
+        h2 { color: #007bff; margin-bottom: 20px; }
+        input[type="password"], textarea { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; box-sizing: border-box; }
+        .controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 20px 0; background: #252525; padding: 15px; border-radius: 8px; }
+        button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #007bff; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #0056b3; }
+        .secondary-btn { background: #444; margin-top: 10px; font-size: 12px; width: auto; padding: 5px 15px; }
+        #status { margin-top: 15px; font-size: 14px; font-weight: bold; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #28a745; }
+        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <h2>Ad Dashboard</h2>
-        <input type="password" id="token" placeholder="Enter GitHub Token">
-        <hr>
-        <div class="toggle-container">
-            <label>Ads Enabled:</label>
-            <input type="checkbox" id="adsEnabled" checked>
+        <h2>Control Center</h2>
+        
+        <input type="password" id="token" placeholder="GitHub Personal Access Token">
+        <button class="secondary-btn" onclick="saveToken()">Save Token to Browser</button>
+        <button class="secondary-btn" style="background:#dc3545" onclick="clearToken()">Clear</button>
+        
+        <hr style="border: 0.5px solid #333; margin: 25px 0;">
+
+        <div class="controls">
+            <span>Ads Enabled</span>
+            <label class="switch">
+                <input type="checkbox" id="adsEnabled" checked>
+                <span class="slider"></span>
+            </label>
         </div>
-        <textarea id="adText" placeholder="Enter Ad Message..."></textarea>
-        <button onclick="updateConfig()">Update System</button>
+
+        <textarea id="adText" rows="4" placeholder="Enter Ad Message (e.g. Check out Nutrichests!)"></textarea>
+        
+        <button onclick="updateConfig()">PUSH TO SYSTEM</button>
+        
         <p id="status"></p>
     </div>
 
     <script type="module">
         import { Octokit } from "https://esm.sh/octokit";
+
+        // Auto-load token from LocalStorage on page load
+        window.onload = () => {
+            const savedToken = localStorage.getItem('ansar_gh_token');
+            if (savedToken) {
+                document.getElementById('token').value = savedToken;
+                document.getElementById('status').innerText = "Token loaded from memory.";
+            }
+        };
+
+        window.saveToken = () => {
+            const token = document.getElementById('token').value;
+            localStorage.setItem('ansar_gh_token', token);
+            alert("Token saved locally! You won't have to paste it again on this computer.");
+        };
+
+        window.clearToken = () => {
+            localStorage.removeItem('ansar_gh_token');
+            document.getElementById('token').value = "";
+            alert("Token cleared.");
+        };
 
         window.updateConfig = async () => {
             const token = document.getElementById('token').value;
@@ -36,31 +80,32 @@
             if (!token) return alert("Please enter your GitHub Token!");
 
             const octokit = new Octokit({ auth: token });
-            const owner = "syedxshah"; // Your GitHub username
-            const repo = "syedxshah.github.io"; // Your Repo name
+            const owner = "syedxshah";
+            const repo = "syedxshah.github.io";
             const path = "ads_config.json";
 
             try {
-                status.innerText = "Fetching current file...";
-                // 1. Get current file SHA
+                status.innerText = "Connecting to GitHub...";
                 const { data: fileData } = await octokit.rest.repos.getContent({ owner, repo, path });
 
-                // 2. Update File
                 const content = btoa(JSON.stringify({ 
                     ads_enabled: isEnabled, 
-                    ad_text: text 
+                    ad_text: text,
+                    last_updated: new Date().toLocaleString()
                 }, null, 2));
 
                 await octokit.rest.repos.createOrUpdateFileContents({
                     owner, repo, path,
-                    message: "Update Ads via Web Dashboard",
+                    message: "Remote Update: " + text.substring(0, 20),
                     content,
                     sha: fileData.sha
                 });
 
-                status.innerText = "✅ System Updated Successfully!";
+                status.style.color = "#28a745";
+                status.innerText = "🚀 SUCCESS: PCs will update in ~30s";
             } catch (err) {
-                status.innerText = "❌ Error: " + err.message;
+                status.style.color = "#dc3545";
+                status.innerText = "Error: " + err.message;
             }
         };
     </script>
