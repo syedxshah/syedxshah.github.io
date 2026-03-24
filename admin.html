@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Ansar Ad Control</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 50px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; display: inline-block; width: 350px; }
+        input, textarea, button { width: 90%; margin: 10px 0; padding: 10px; border-radius: 5px; border: none; }
+        button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
+        .toggle-container { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Ad Dashboard</h2>
+        <input type="password" id="token" placeholder="Enter GitHub Token">
+        <hr>
+        <div class="toggle-container">
+            <label>Ads Enabled:</label>
+            <input type="checkbox" id="adsEnabled" checked>
+        </div>
+        <textarea id="adText" placeholder="Enter Ad Message..."></textarea>
+        <button onclick="updateConfig()">Update System</button>
+        <p id="status"></p>
+    </div>
+
+    <script type="module">
+        import { Octokit } from "https://esm.sh/octokit";
+
+        window.updateConfig = async () => {
+            const token = document.getElementById('token').value;
+            const isEnabled = document.getElementById('adsEnabled').checked;
+            const text = document.getElementById('adText').value;
+            const status = document.getElementById('status');
+
+            if (!token) return alert("Please enter your GitHub Token!");
+
+            const octokit = new Octokit({ auth: token });
+            const owner = "syedxshah"; // Your GitHub username
+            const repo = "syedxshah.github.io"; // Your Repo name
+            const path = "ads_config.json";
+
+            try {
+                status.innerText = "Fetching current file...";
+                // 1. Get current file SHA
+                const { data: fileData } = await octokit.rest.repos.getContent({ owner, repo, path });
+
+                // 2. Update File
+                const content = btoa(JSON.stringify({ 
+                    ads_enabled: isEnabled, 
+                    ad_text: text 
+                }, null, 2));
+
+                await octokit.rest.repos.createOrUpdateFileContents({
+                    owner, repo, path,
+                    message: "Update Ads via Web Dashboard",
+                    content,
+                    sha: fileData.sha
+                });
+
+                status.innerText = "✅ System Updated Successfully!";
+            } catch (err) {
+                status.innerText = "❌ Error: " + err.message;
+            }
+        };
+    </script>
+</body>
+</html>
