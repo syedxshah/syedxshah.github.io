@@ -1,8 +1,8 @@
 {
-  "ads_enabled": true,
+  "ads_enabled": false,
   "ad_folder_url": "",
   "ad_files": [
     "ad1.png"
   ],
-  "timestamp": 1774392138638
+  "timestamp": 1774392234139
 }
