@@ -2,24 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ansar | PC Command Center</title>
+    <title>Ansar Fleet Command</title>
     <style>
         :root { --accent: #007bff; --bg: #0d1117; --card: #161b22; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #c9d1d9; padding: 20px; display: flex; justify-content: center; }
-        .card { background: var(--card); border: 1px solid #30363d; padding: 25px; border-radius: 12px; width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .pc-row { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 15px; border-radius: 8px; margin: 10px 0; border: 1px solid #30363d; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #c9d1d9; display: flex; justify-content: center; padding: 20px; }
+        .card { background: var(--card); border: 1px solid #30363d; padding: 25px; border-radius: 12px; width: 450px; }
+        .pc-row { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 12px; border-radius: 8px; margin: 10px 0; border: 1px solid #30363d; }
         .btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .del-btn { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 18px; margin-left: 10px; }
+        .del-btn { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 18px; }
         input[type="password"] { width: 100%; padding: 10px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-
 <div class="card">
-    <h2 style="color: var(--accent); text-align: center;">PC Fleet Manager</h2>
-    <input type="password" id="token" placeholder="Enter GitHub Token">
-    <div id="pcList">Loading registered PCs...</div>
-    <button class="btn" onclick="saveAll()">APPLY CHANGES TO ALL</button>
+    <h2 style="color: var(--accent); text-align: center;">PC Manager</h2>
+    <input type="password" id="token" placeholder="GitHub Token">
+    <div id="pcList">Syncing...</div>
+    <button class="btn" onclick="saveAll()">SYNC ALL PCs</button>
     <p id="status" style="text-align: center; font-size: 13px; margin-top: 10px;"></p>
 </div>
 
@@ -31,59 +30,32 @@
     window.onload = async () => {
         const saved = localStorage.getItem('ansar_token');
         if(saved) document.getElementById('token').value = saved;
-        await refreshData();
+        await refresh();
     };
 
-    async function refreshData() {
+    async function refresh() {
         const res = await fetch(`https://${config.owner}.github.io/${config.path}?t=${Date.now()}`);
         masterData = await res.json();
-        render();
-    }
-
-    function render() {
         const container = document.getElementById('pcList');
         container.innerHTML = "";
         Object.keys(masterData.pcs).forEach(pc => {
             const div = document.createElement('div');
             div.className = 'pc-row';
-            div.innerHTML = `
-                <span><strong>${pc}</strong></span>
-                <div style="display:flex; align-items:center;">
-                    <input type="checkbox" ${masterData.pcs[pc] ? 'checked' : ''} onchange="toggle('${pc}', this.checked)">
-                    <button class="del-btn" onclick="removePC('${pc}')">🗑️</button>
-                </div>
-            `;
+            div.innerHTML = `<span>${pc}</span><div><input type="checkbox" ${masterData.pcs[pc]?'checked':''} onchange="masterData.pcs['${pc}']=this.checked"><button class="del-btn" onclick="removePC('${pc}')">🗑️</button></div>`;
             container.appendChild(div);
         });
     }
 
-    window.toggle = (pc, val) => { masterData.pcs[pc] = val; };
-    
-    window.removePC = (pc) => {
-        if(confirm(`Delete ${pc}?`)) {
-            delete masterData.pcs[pc];
-            render();
-        }
-    };
+    window.removePC = (pc) => { if(confirm(`Delete ${pc}?`)) { delete masterData.pcs[pc]; refresh(); } };
 
     window.saveAll = async () => {
         const token = document.getElementById('token').value;
-        if(!token) return alert("Token Required");
-        localStorage.setItem('ansar_token', token);
         const octokit = new Octokit({ auth: token });
-        const log = document.getElementById('status');
-        
         try {
-            log.innerText = "Syncing...";
             const { data: file } = await octokit.rest.repos.getContent(config);
-            await octokit.rest.repos.createOrUpdateFileContents({
-                ...config, message: "Admin Update",
-                content: btoa(JSON.stringify(masterData, null, 2)),
-                sha: file.sha
-            });
-            log.style.color = "#28a745";
-            log.innerText = "🚀 System Synchronized!";
-        } catch (e) { log.innerText = "Error: " + e.message; }
+            await octokit.rest.repos.createOrUpdateFileContents({ ...config, message: "Dashboard Sync", content: btoa(JSON.stringify(masterData, null, 2)), sha: file.sha });
+            document.getElementById('status').innerText = "✅ Successfully Updated!";
+        } catch (e) { alert(e.message); }
     };
 </script>
 </body>
