@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFormHandler();
     initCopyProtection();
     initTypingAnimation();
+    initInfiniteScroll();
     console.log('💎 Portfolio Loaded Successfully');
 });
 
@@ -455,3 +456,25 @@ window.addEventListener('load', () => {
         document.body.style.opacity = '1';
     }, 100);
 });
+
+/* === Infinite Scroll === */
+function initInfiniteScroll() {
+    window.addEventListener('scroll', () => {
+        const scrollPosition = Math.ceil(window.innerHeight + window.scrollY);
+        const documentHeight = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.offsetHeight,
+            document.documentElement.clientHeight
+        );
+        
+        // When we reach the bottom, instantly jump to the top
+        if (scrollPosition >= documentHeight - 5) {
+            window.scrollTo({
+                top: 0,
+                behavior: 'instant'
+            });
+        }
+    });
+}
